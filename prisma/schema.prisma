@@ -20,7 +20,7 @@ model User {
 model Task {
   id          Int      @id @default(autoincrement())
   title       String
-  description String?
+  description String?docker-compose build --no-cache
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
