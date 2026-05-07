@@ -6,7 +6,7 @@ WORKDIR /app
 # Копируем файлы с зависимостями
 COPY package*.json ./
 # Устанавливаем ВСЕ зависимости (включая dev)
-RUN npm ci
+RUN npm install
 
 # Копируем исходники и Prisma-схему
 COPY prisma ./prisma
