@@ -1,195 +1,101 @@
-
 generator client {
-
   provider = "prisma-client-js"
-
 }
-
-
 
 datasource db {
-
   provider = "sqlite"
-
   url      = "file:./dev.db"
-
 }
-
-
 
 model User {
-
   id        String   @id @default(cuid())
-
   email     String   @unique
-
   password  String
-
   name      String
-
   phone     String?
-
   role      String   @default("CLIENT")
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   equipment Equipment[]
-
   orders    Order[]
-
   favorites Favorite[]
-
   supplier  Supplier?
-
 }
-
-
 
 model Supplier {
-
   id        String   @id @default(cuid())
-
   userId    String   @unique
-
   user      User     @relation(fields: [userId], references: [id])
-
   name      String
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   equipment Equipment[]
-
 }
-
-
 
 model Category {
-
   id        String   @id @default(cuid())
-
   name      String   @unique
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
-
-
   equipment Equipment[]
-
 }
 
-
-
 model Equipment {
-
   id          String   @id @default(cuid())
-
   name        String
-
   description String?
-
   price       Float
-
   city        String
-
   images      String
-
   quantity    Int      @default(1)
-
   available   Int      @default(1)
-
   deliveryAvailable Boolean @default(false)
-
   createdAt   DateTime @default(now())
-
   updatedAt   DateTime @updatedAt
 
   userId      String
-
   user        User     @relation(fields: [userId], references: [id])
-
   supplierId  String?
-
   supplier    Supplier? @relation(fields: [supplierId], references: [id])
-
   categoryId  String?
-
   category    Category? @relation(fields: [categoryId], references: [id])
 
   orderItems  OrderItem[]
-
   favorites   Favorite[]
-
 }
 
-
-
 model Order {
-
   id        String   @id @default(cuid())
-
   userId    String
-
   user      User     @relation(fields: [userId], references: [id])
-
   status    String   @default("CREATED")
-
   total     Float
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
 
   items     OrderItem[]
-
 }
-
-
 
 model OrderItem {
-
   id          String    @id @default(cuid())
-
   orderId     String
-
   order       Order     @relation(fields: [orderId], references: [id])
-
   equipmentId String
-
   equipment   Equipment @relation(fields: [equipmentId], references: [id])
-
   quantity    Int
-
   price       Float
-
 }
 
-
-
 model Favorite {
-
   id          String    @id @default(cuid())
-
   userId      String
-
   user        User      @relation(fields: [userId], references: [id])
-
   equipmentId String
-
   equipment   Equipment @relation(fields: [equipmentId], references: [id])
-
   createdAt   DateTime  @default(now())
 
   @@unique([userId, equipmentId])
-
 }
-
