@@ -21,8 +21,7 @@ export class SupplierService {
   }
 
   async update(userId: string, dto: Partial<CreateSupplierDto>) {
-    const supplier = await this.prisma.supplier.findUnique({ where: { userId } });
-    if (!supplier) throw new NotFoundException('Supplier profile not found');
+    await this.findOne(userId);
     return this.prisma.supplier.update({ where: { userId }, data: { name: dto.companyName } });
   }
 
