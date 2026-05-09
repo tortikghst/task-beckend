@@ -7,9 +7,10 @@ import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { SupplierModule } from './supplier/supplier.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { TasksModule } from "./tasks/tasks.module";
 
 @Module({
-  imports: [
+  imports: [TasksModule, 
     PrismaModule,
     AuthModule,
     UsersModule,
