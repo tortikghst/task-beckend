@@ -5,6 +5,8 @@ generator client {
 
 }
 
+
+
 datasource db {
 
   provider = "postgresql"
@@ -12,6 +14,8 @@ datasource db {
   url      = env("DATABASE_URL")
 
 }
+
+
 
 model User {
 
@@ -31,13 +35,73 @@ model User {
 
   updatedAt DateTime @updatedAt
 
-  orders    Order[]
 
-  favorites Favorite[]
 
-  equipment Equipment[]
+  orders     Order[]
+
+  favorites  Favorite[]
+
+  equipment  Equipment[]
+
+  supplier   Supplier?
 
 }
+
+
+
+model Supplier {
+
+  id          String   @id @default(cuid())
+
+  userId      String   @unique
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  companyName String
+
+  description String?
+
+  rating      Float    @default(0)
+
+  reviewCount Int      @default(0)
+
+  phone       String?
+
+  email       String?
+
+  logo        String?
+
+  createdAt   DateTime @default(now())
+
+  updatedAt   DateTime @updatedAt
+
+
+
+  equipment   Equipment[]
+
+}
+
+
+
+model Category {
+
+  id          String   @id @default(cuid())
+
+  name        String   @unique
+
+  description String?
+
+  createdAt   DateTime @default(now())
+
+  updatedAt   DateTime @updatedAt
+
+
+
+  equipment   Equipment[]
+
+}
+
+
 
 model Equipment {
 
@@ -51,7 +115,7 @@ model Equipment {
 
   deposit     Float?
 
-  images      String
+  images      String[]
 
   quantity    Int      @default(1)
 
@@ -67,15 +131,29 @@ model Equipment {
 
   updatedAt   DateTime @updatedAt
 
+
+
   userId      String
 
   user        User     @relation(fields: [userId], references: [id])
+
+  supplierId  String?
+
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+
+  categoryId  String?
+
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+
 
   orderItems  OrderItem[]
 
   favorites   Favorite[]
 
 }
+
+
 
 model Order {
 
@@ -99,9 +177,13 @@ model Order {
 
   updatedAt    DateTime @updatedAt
 
+
+
   items        OrderItem[]
 
 }
+
+
 
 model OrderItem {
 
@@ -125,6 +207,8 @@ model OrderItem {
 
 }
 
+
+
 model Favorite {
 
   id          String    @id @default(cuid())
@@ -138,6 +222,8 @@ model Favorite {
   equipment   Equipment @relation(fields: [equipmentId], references: [id])
 
   createdAt   DateTime  @default(now())
+
+
 
   @@unique([userId, equipmentId])
 

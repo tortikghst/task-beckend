@@ -12,12 +12,14 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { OrdersModule } from './orders/orders.module';
 
 import { FavoritesModule } from './favorites/favorites.module';
+import { SupplierModule } from "./supplier/supplier.module";
+import { CategoriesModule } from "./categories/categories.module";
 
 
 
 @Module({
 
-  imports: [
+  imports: [CategoriesModule, SupplierModule, 
 
     PrismaModule,
 

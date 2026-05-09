@@ -9,13 +9,13 @@ import { CreateOrderDto } from './dto/create-order.dto';
 
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 
 
 
 @ApiTags('orders')
 
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 
 @Controller('orders')
 
@@ -25,13 +25,19 @@ export class OrdersController {
 
 
 
-  @UseGuards(AuthGuard('jwt'))
-
   @Post()
 
-  @ApiOperation({ summary: 'Создать заказ' })
+  @UseGuards(AuthGuard('jwt'))
 
-  create(@Request() req, @Body() createOrderDto: CreateOrderDto) {
+  @ApiOperation({ summary: 'Создать заказ', description: 'Создаёт заказ на аренду оборудования' })
+
+  @ApiBody({ type: CreateOrderDto, description: 'Данные заказа' })
+
+  @ApiResponse({ status: 201, description: 'Заказ создан' })
+
+  @ApiResponse({ status: 401, description: 'Не авторизован' })
+
+  async create(@Request() req, @Body() createOrderDto: CreateOrderDto) {
 
     const userId = req.user?.userId || '1';
 
@@ -41,13 +47,15 @@ export class OrdersController {
 
 
 
-  @UseGuards(AuthGuard('jwt'))
-
   @Get()
 
-  @ApiOperation({ summary: 'Получить все заказы пользователя' })
+  @UseGuards(AuthGuard('jwt'))
 
-  findAll(@Request() req) {
+  @ApiOperation({ summary: 'Получить все заказы пользователя', description: 'Возвращает список заказов текущего пользователя' })
+
+  @ApiResponse({ status: 200, description: 'Список заказов' })
+
+  async findAll(@Request() req) {
 
     const userId = req.user?.userId || '1';
 
@@ -57,13 +65,17 @@ export class OrdersController {
 
 
 
-  @UseGuards(AuthGuard('jwt'))
-
   @Get(':id')
+
+  @UseGuards(AuthGuard('jwt'))
 
   @ApiOperation({ summary: 'Получить заказ по ID' })
 
-  findOne(@Param('id') id: string, @Request() req) {
+  @ApiParam({ name: 'id', description: 'UUID заказа' })
+
+  @ApiResponse({ status: 200, description: 'Данные заказа' })
+
+  async findOne(@Param('id') id: string, @Request() req) {
 
     const userId = req.user?.userId || '1';
 
@@ -73,31 +85,23 @@ export class OrdersController {
 
 
 
-  @UseGuards(AuthGuard('jwt'))
-
   @Patch(':id/status')
 
-  @ApiOperation({ summary: 'Обновить статус заказа' })
+  @UseGuards(AuthGuard('jwt'))
 
-  updateStatus(@Param('id') id: string, @Body() updateStatusDto: UpdateOrderStatusDto, @Request() req) {
+  @ApiOperation({ summary: 'Обновить статус заказа', description: 'Изменяет статус заказа (например, на "CONFIRMED")' })
+
+  @ApiParam({ name: 'id', description: 'UUID заказа' })
+
+  @ApiBody({ type: UpdateOrderStatusDto })
+
+  @ApiResponse({ status: 200, description: 'Статус обновлён' })
+
+  async updateStatus(@Param('id') id: string, @Body() updateStatusDto: UpdateOrderStatusDto, @Request() req) {
 
     const userId = req.user?.userId || '1';
 
     return this.ordersService.updateStatus(id, userId, updateStatusDto.status);
-
-  }
-
-
-
-  // Админский эндпоинт для ручного запуска автоотмены (можно через Cron)
-
-  @Post('auto-cancel')
-
-  @ApiOperation({ summary: 'Автоматическая отмена старых заказов (админ)' })
-
-  async autoCancel() {
-
-    return this.ordersService.autoCancelExpiredOrders(24);
 
   }
 
