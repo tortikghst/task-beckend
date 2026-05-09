@@ -9,9 +9,9 @@ generator client {
 
 datasource db {
 
-  provider = "postgresql"
+  provider = "sqlite"
 
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 
 }
 
@@ -37,13 +37,13 @@ model User {
 
 
 
-  orders     Order[]
+  equipment Equipment[]
 
-  favorites  Favorite[]
+  orders    Order[]
 
-  equipment  Equipment[]
+  favorites Favorite[]
 
-  supplier   Supplier?
+  supplier  Supplier?
 
 }
 
@@ -51,33 +51,21 @@ model User {
 
 model Supplier {
 
-  id          String   @id @default(cuid())
+  id        String   @id @default(cuid())
 
-  userId      String   @unique
+  userId    String   @unique
 
-  user        User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
-  companyName String
+  name      String
 
-  description String?
+  createdAt DateTime @default(now())
 
-  rating      Float    @default(0)
-
-  reviewCount Int      @default(0)
-
-  phone       String?
-
-  email       String?
-
-  logo        String?
-
-  createdAt   DateTime @default(now())
-
-  updatedAt   DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
 
 
-  equipment   Equipment[]
+  equipment Equipment[]
 
 }
 
@@ -85,19 +73,17 @@ model Supplier {
 
 model Category {
 
-  id          String   @id @default(cuid())
+  id        String   @id @default(cuid())
 
-  name        String   @unique
+  name      String   @unique
 
-  description String?
+  createdAt DateTime @default(now())
 
-  createdAt   DateTime @default(now())
-
-  updatedAt   DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
 
 
-  equipment   Equipment[]
+  equipment Equipment[]
 
 }
 
@@ -113,25 +99,19 @@ model Equipment {
 
   price       Float
 
-  deposit     Float?
+  city        String
 
-  images      String[]
+  images      String
 
   quantity    Int      @default(1)
 
   available   Int      @default(1)
 
-  city        String
-
   deliveryAvailable Boolean @default(false)
-
-  rating      Float    @default(0)
 
   createdAt   DateTime @default(now())
 
   updatedAt   DateTime @updatedAt
-
-
 
   userId      String
 
@@ -145,8 +125,6 @@ model Equipment {
 
   category    Category? @relation(fields: [categoryId], references: [id])
 
-
-
   orderItems  OrderItem[]
 
   favorites   Favorite[]
@@ -157,29 +135,21 @@ model Equipment {
 
 model Order {
 
-  id           String   @id @default(cuid())
+  id        String   @id @default(cuid())
 
-  userId       String
+  userId    String
 
-  user         User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
-  status       String   @default("CREATED")
+  status    String   @default("CREATED")
 
-  totalPrice   Float
+  total     Float
 
-  eventType    String?
+  createdAt DateTime @default(now())
 
-  eventDate    DateTime?
+  updatedAt DateTime @updatedAt
 
-  eventCity    String?
-
-  createdAt    DateTime @default(now())
-
-  updatedAt    DateTime @updatedAt
-
-
-
-  items        OrderItem[]
+  items     OrderItem[]
 
 }
 
@@ -199,11 +169,7 @@ model OrderItem {
 
   quantity    Int
 
-  priceAtTime Float
-
-  startDate   DateTime
-
-  endDate     DateTime
+  price       Float
 
 }
 
@@ -222,8 +188,6 @@ model Favorite {
   equipment   Equipment @relation(fields: [equipmentId], references: [id])
 
   createdAt   DateTime  @default(now())
-
-
 
   @@unique([userId, equipmentId])
 

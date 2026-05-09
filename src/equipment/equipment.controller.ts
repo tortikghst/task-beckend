@@ -20,6 +20,12 @@ export class EquipmentController {
 
 
   @Get()
+  @Get(random)
+  @ApiOperation({ summary: "Случайное оборудование" })
+  @ApiQuery({ name: "limit", required: false, example: 6 })
+  async random(@Query("limit") limit?: number) {
+    return this.equipmentService.findRandom(limit || 6);
+  }
 
   @ApiOperation({ summary: 'Поиск оборудования', description: 'Возвращает список оборудования с возможностью фильтрации' })
 
@@ -46,6 +52,12 @@ export class EquipmentController {
 
 
   @Get(':id')
+  @Get(random)
+  @ApiOperation({ summary: "Случайное оборудование" })
+  @ApiQuery({ name: "limit", required: false, example: 6 })
+  async random(@Query("limit") limit?: number) {
+    return this.equipmentService.findRandom(limit || 6);
+  }
 
   @ApiOperation({ summary: 'Получить оборудование по ID' })
 

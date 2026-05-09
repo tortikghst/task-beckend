@@ -29,59 +29,37 @@ export class EquipmentService {
 
     const { city, minPrice, maxPrice, search, delivery } = filters;
 
-    // Строим безопасный SQL-запрос
-
-    let sql = 'SELECT * FROM "Equipment" WHERE 1=1';
-
-    const params: any[] = [];
+    const where: any = {};
 
 
 
-    if (city) {
+    if (city) where.city = { contains: city, mode: 'insensitive' };
 
-      sql += ` AND city ILIKE $${params.length + 1}`;
+    if (minPrice !== undefined || maxPrice !== undefined) {
 
-      params.push(`%${city}%`);
+      where.price = {};
 
-    }
+      if (minPrice !== undefined) where.price.gte = Number(minPrice);
 
-    if (minPrice !== undefined) {
-
-      sql += ` AND price >= $${params.length + 1}`;
-
-      params.push(Number(minPrice)); // Явно преобразуем в число
+      if (maxPrice !== undefined) where.price.lte = Number(maxPrice);
 
     }
 
-    if (maxPrice !== undefined) {
-
-      sql += ` AND price <= $${params.length + 1}`;
-
-      params.push(Number(maxPrice));
-
-    }
-
-    if (delivery !== undefined) {
-
-      sql += ` AND "deliveryAvailable" = $${params.length + 1}`;
-
-      params.push(delivery);
-
-    }
+    if (delivery !== undefined) where.deliveryAvailable = delivery;
 
     if (search) {
 
-      sql += ` AND (name ILIKE $${params.length + 1} OR description ILIKE $${params.length + 2})`;
+      where.OR = [
 
-      params.push(`%${search}%`, `%${search}%`);
+        { name: { contains: search, mode: 'insensitive' } },
+
+        { description: { contains: search, mode: 'insensitive' } },
+
+      ];
 
     }
 
-
-
-    // Выполняем сырой запрос
-
-    return this.prisma.$queryRawUnsafe(sql, ...params);
+    return this.prisma.equipment.findMany({ where });
 
   }
 
@@ -97,10 +75,6 @@ export class EquipmentService {
 
   async create(data: any) {
 
-    // Убедимся, что цена — число
-
-    if (data.price !== undefined) data.price = Number(data.price);
-
     return this.prisma.equipment.create({ data });
 
   }
@@ -108,8 +82,6 @@ export class EquipmentService {
 
 
   async update(id: string, data: any) {
-
-    if (data.price !== undefined) data.price = Number(data.price);
 
     return this.prisma.equipment.update({ where: { id }, data });
 
@@ -120,6 +92,18 @@ export class EquipmentService {
   async remove(id: string) {
 
     return this.prisma.equipment.delete({ where: { id } });
+
+  }
+
+
+
+  async findRandom(limit: number = 6) {
+
+    const count = await this.prisma.equipment.count();
+
+    const skip = Math.max(0, Math.floor(Math.random() * count));
+
+    return this.prisma.equipment.findMany({ take: limit, skip });
 
   }
 
