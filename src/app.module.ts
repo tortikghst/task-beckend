@@ -11,11 +11,27 @@ import { EquipmentModule } from './equipment/equipment.module';
 
 import { OrdersModule } from './orders/orders.module';
 
+import { FavoritesModule } from './favorites/favorites.module';
+
 
 
 @Module({
 
-  imports: [PrismaModule, AuthModule, UsersModule, EquipmentModule, OrdersModule],
+  imports: [
+
+    PrismaModule,
+
+    AuthModule,
+
+    UsersModule,
+
+    EquipmentModule,
+
+    OrdersModule,
+
+    FavoritesModule,
+
+  ],
 
 })
 

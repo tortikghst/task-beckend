@@ -39,15 +39,13 @@ export class EquipmentService {
 
     }
 
-    if (minPrice !== undefined) {
+    if (minPrice !== undefined || maxPrice !== undefined) {
 
-      where.price = { gte: minPrice };
+      where.price = {};
 
-    }
+      if (minPrice !== undefined) where.price.gte = minPrice;
 
-    if (maxPrice !== undefined) {
-
-      where.price = { ...where.price, lte: maxPrice };
+      if (maxPrice !== undefined) where.price.lte = maxPrice;
 
     }
 
@@ -87,31 +85,7 @@ export class EquipmentService {
 
   async create(data: any) {
 
-    // Проверяем, есть ли хотя бы один пользователь. Если нет – создаём тестового.
-
-    let user = await this.prisma.user.findFirst();
-
-    if (!user) {
-
-      user = await this.prisma.user.create({
-
-        data: {
-
-          email: 'default@example.com',
-
-          password: '$2b$10$defaultpassword',
-
-          name: 'Default User',
-
-          role: 'CLIENT'
-
-        }
-
-      });
-
-    }
-
-    return this.prisma.equipment.create({ data: { ...data, userId: user.id } });
+    return this.prisma.equipment.create({ data });
 
   }
 
