@@ -7,18 +7,24 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateOrderDto) {
-    // Упрощённое создание заказа – без проверки доступности и расчёта цены
+    let total = 0;
+    const itemsData = [];
+    for (const item of dto.items) {
+      const equipment = await this.prisma.equipment.findUnique({ where: { id: item.equipmentId } });
+      if (!equipment) throw new NotFoundException(`Equipment ${item.equipmentId} not found`);
+      const itemPrice = equipment.price * item.quantity;
+      total += itemPrice;
+      itemsData.push({
+        equipmentId: item.equipmentId,
+        quantity: item.quantity,
+        price: itemPrice,
+      });
+    }
     const order = await this.prisma.order.create({
       data: {
         userId,
-        total: 0,
-        items: {
-          create: dto.items.map(item => ({
-            equipmentId: item.equipmentId,
-            quantity: item.quantity,
-            price: 0,
-          })),
-        },
+        total,
+        items: { create: itemsData },
       },
       include: { items: { include: { equipment: true } } },
     });
@@ -43,7 +49,7 @@ export class OrdersService {
   }
 
   async updateStatus(id: string, userId: string, status: string) {
-    const order = await this.findOne(id, userId);
+    await this.findOne(id, userId);
     return this.prisma.order.update({
       where: { id },
       data: { status },
@@ -52,7 +58,14 @@ export class OrdersService {
   }
 
   async autoCancelOldOrders(minutes: number = 15) {
-    // Упрощённая заглушка
-    return { cancelled: 0 };
+    const deadline = new Date(Date.now() - minutes * 60000);
+    const result = await this.prisma.order.updateMany({
+      where: {
+        status: { in: ['CREATED', 'PENDING_PAYMENT'] },
+        createdAt: { lt: deadline },
+      },
+      data: { status: 'CANCELLED' },
+    });
+    return { cancelled: result.count };
   }
 }
