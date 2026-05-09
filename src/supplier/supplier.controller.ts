@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Put, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, UseGuards, Request, Param } from '@nestjs/common';
 
 import { AuthGuard } from '@nestjs/passport';
 
@@ -7,7 +7,9 @@ import { SupplierService } from './supplier.service';
 
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { CreateReviewDto } from './dto/create-review.dto';
+
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 
 
 
@@ -72,6 +74,38 @@ export class SupplierController {
   async findAll() {
 
     return this.supplierService.findAll();
+
+  }
+
+
+
+  @Post(':id/review')
+
+  @UseGuards(AuthGuard('jwt'))
+
+  @ApiOperation({ summary: 'Добавить отзыв о поставщике' })
+
+  @ApiParam({ name: 'id', description: 'ID поставщика' })
+
+  @ApiBody({ type: CreateReviewDto })
+
+  async addReview(@Param('id') id: string, @Request() req, @Body() dto: CreateReviewDto) {
+
+    return this.supplierService.addReview(id, req.user.userId, dto);
+
+  }
+
+
+
+  @Get(':id/reviews')
+
+  @ApiOperation({ summary: 'Получить все отзывы о поставщике' })
+
+  @ApiParam({ name: 'id', description: 'ID поставщика' })
+
+  async getReviews(@Param('id') id: string) {
+
+    return this.supplierService.getReviews(id);
 
   }
 
