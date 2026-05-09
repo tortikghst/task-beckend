@@ -25,9 +25,11 @@ export class EquipmentService {
 
     delivery?: boolean;
 
+    categoryId?: string;
+
   }) {
 
-    const { city, minPrice, maxPrice, search, delivery } = filters;
+    const { city, minPrice, maxPrice, search, delivery, categoryId } = filters;
 
     const where: any = {};
 
@@ -35,15 +37,9 @@ export class EquipmentService {
 
     if (city) where.city = { contains: city, mode: 'insensitive' };
 
-    if (minPrice !== undefined || maxPrice !== undefined) {
+    if (minPrice !== undefined) where.price = { gte: Number(minPrice) };
 
-      where.price = {};
-
-      if (minPrice !== undefined) where.price.gte = Number(minPrice);
-
-      if (maxPrice !== undefined) where.price.lte = Number(maxPrice);
-
-    }
+    if (maxPrice !== undefined) where.price = { ...where.price, lte: Number(maxPrice) };
 
     if (delivery !== undefined) where.deliveryAvailable = delivery;
 
@@ -58,6 +54,10 @@ export class EquipmentService {
       ];
 
     }
+
+    if (categoryId) where.categoryId = categoryId;
+
+
 
     return this.prisma.equipment.findMany({ where });
 
