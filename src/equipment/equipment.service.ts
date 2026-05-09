@@ -29,47 +29,59 @@ export class EquipmentService {
 
     const { city, minPrice, maxPrice, search, delivery } = filters;
 
-    const where: any = {};
+    // Строим безопасный SQL-запрос
+
+    let sql = 'SELECT * FROM "Equipment" WHERE 1=1';
+
+    const params: any[] = [];
 
 
 
     if (city) {
 
-      where.city = { contains: city, mode: 'insensitive' };
+      sql += ` AND city ILIKE $${params.length + 1}`;
+
+      params.push(`%${city}%`);
 
     }
 
-    if (minPrice !== undefined || maxPrice !== undefined) {
+    if (minPrice !== undefined) {
 
-      where.price = {};
+      sql += ` AND price >= $${params.length + 1}`;
 
-      if (minPrice !== undefined) where.price.gte = minPrice;
+      params.push(Number(minPrice)); // Явно преобразуем в число
 
-      if (maxPrice !== undefined) where.price.lte = maxPrice;
+    }
+
+    if (maxPrice !== undefined) {
+
+      sql += ` AND price <= $${params.length + 1}`;
+
+      params.push(Number(maxPrice));
 
     }
 
     if (delivery !== undefined) {
 
-      where.deliveryAvailable = delivery;
+      sql += ` AND "deliveryAvailable" = $${params.length + 1}`;
+
+      params.push(delivery);
 
     }
 
     if (search) {
 
-      where.OR = [
+      sql += ` AND (name ILIKE $${params.length + 1} OR description ILIKE $${params.length + 2})`;
 
-        { name: { contains: search, mode: 'insensitive' } },
-
-        { description: { contains: search, mode: 'insensitive' } },
-
-      ];
+      params.push(`%${search}%`, `%${search}%`);
 
     }
 
 
 
-    return this.prisma.equipment.findMany({ where });
+    // Выполняем сырой запрос
+
+    return this.prisma.$queryRawUnsafe(sql, ...params);
 
   }
 
@@ -85,6 +97,10 @@ export class EquipmentService {
 
   async create(data: any) {
 
+    // Убедимся, что цена — число
+
+    if (data.price !== undefined) data.price = Number(data.price);
+
     return this.prisma.equipment.create({ data });
 
   }
@@ -92,6 +108,8 @@ export class EquipmentService {
 
 
   async update(id: string, data: any) {
+
+    if (data.price !== undefined) data.price = Number(data.price);
 
     return this.prisma.equipment.update({ where: { id }, data });
 
