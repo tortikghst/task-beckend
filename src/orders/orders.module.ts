@@ -17,6 +17,8 @@ import { PrismaModule } from '../prisma/prisma.module';
 
   providers: [OrdersService],
 
+  exports: [OrdersService],   // <-- добавляем экспорт
+
 })
 
 export class OrdersModule {}

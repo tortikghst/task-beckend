@@ -17,6 +17,8 @@ export class OrdersService {
 
   async create(userId: string, dto: CreateOrderDto) {
 
+    // Проверка конфликта бронирования
+
     for (const item of dto.items) {
 
       const start = new Date(item.startDate);
@@ -25,9 +27,7 @@ export class OrdersService {
 
 
 
-      // Проверка: есть ли уже заказ с таким же оборудованием на пересекающиеся даты и не отменённый
-
-      const existing = await this.prisma.orderItem.findFirst({
+      const conflict = await this.prisma.orderItem.findFirst({
 
         where: {
 
@@ -39,19 +39,19 @@ export class OrdersService {
 
           order: {
 
-            status: { not: 'CANCELLED' }
+            status: { not: 'CANCELLED' },
 
-          }
+          },
 
         },
 
-        include: { order: true }
+        include: { order: true },
 
       });
 
 
 
-      if (existing) {
+      if (conflict) {
 
         throw new ConflictException(`Equipment ${item.equipmentId} is already booked for the selected dates`);
 
@@ -61,7 +61,7 @@ export class OrdersService {
 
 
 
-    // Расчёт стоимости и создание заказа
+    // Расчёт общей стоимости
 
     let totalPrice = 0;
 
@@ -90,8 +90,6 @@ export class OrdersService {
         startDate: new Date(item.startDate),
 
         endDate: new Date(item.endDate),
-
-        totalPrice: itemTotal,
 
       });
 
@@ -163,7 +161,7 @@ export class OrdersService {
 
   async updateStatus(id: string, userId: string, status: string) {
 
-    await this.findOne(id, userId);
+    const order = await this.findOne(id, userId);
 
     return this.prisma.order.update({
 

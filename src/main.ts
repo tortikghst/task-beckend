@@ -15,9 +15,7 @@ async function bootstrap() {
 
   app.enableCors();
 
-  app.setGlobalPrefix('api');
-
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
 
 
@@ -25,75 +23,173 @@ async function bootstrap() {
 
     .setTitle('GhostEvent API')
 
-    .setVersion('1.0')
-
     .setDescription(`
 
-## 🎯 Добро пожаловать в API GhostEvent!
+## 🎯 Платформа для аренды оборудования для мероприятий
 
 
 
-GhostEvent — платформа для аренды оборудования для мероприятий. API предоставляет полный доступ к функционалу.
+GhostEvent помогает организаторам мероприятий быстро находить и арендовать оборудование.
 
 
 
-### 🔑 Основные возможности:
+### 🔐 Аутентификация
 
-* **👤 Аутентификация и пользователи:** Регистрация, вход, управление профилем и ролями.
+- **POST /auth/register** – регистрация нового пользователя
 
-* **🎸 Оборудование:** Полный CRUD для управления каталогом с гибкой системой фильтрации.
-
-* **📦 Заказы:** Создание, просмотр и обновление статуса заказов.
-
-* **❤️ Избранное:** Добавление и удаление оборудования из личного списка.
-
-* **📂 Категории:** Управление категориями оборудования (только администратор).
+- **POST /auth/login** – вход, получение JWT токена
 
 
 
-### 🔐 Аутентификация:
+### 🎸 Оборудование
 
-* Для доступа к защищённым эндпоинтам требуется JWT-токен.
+- **GET /equipment** – получение списка с фильтрацией (city, minPrice, maxPrice, search, delivery, categoryId)
 
-* Получить токен можно через \`POST /api/auth/login\`.
+- **GET /equipment/random** – случайное оборудование
 
-* Используйте кнопку **Authorize** для вставки токена в формате \`Bearer <ваш_токен>\`.
+- **GET /equipment/:id** – детали
+
+- **POST /equipment** – создать (только для поставщиков/админов)
+
+- **PUT /equipment/:id** – обновить
+
+- **DELETE /equipment/:id** – удалить
+
+
+
+### 📦 Заказы (требуют JWT)
+
+- **POST /orders** – создать заказ (проверка конфликта дат)
+
+- **GET /orders** – список заказов пользователя
+
+- **GET /orders/:id** – детали заказа
+
+- **PATCH /orders/:id/status** – изменить статус
+
+- **POST /orders/auto-cancel** – отменить старые заказы
+
+
+
+### ❤️ Избранное (JWT)
+
+- **POST /favorites** – добавить в избранное
+
+- **DELETE /favorites/:equipmentId** – удалить
+
+- **GET /favorites** – список
+
+
+
+### 📂 Категории
+
+- **GET /categories** – список всех категорий
+
+- **POST /categories** – создать (админ)
+
+- **PUT /categories/:id** – обновить (админ)
+
+- **DELETE /categories/:id** – удалить (админ)
+
+
+
+### 🏢 Поставщики
+
+- **GET /supplier** – список поставщиков
+
+- **POST /supplier/profile** – создать профиль (JWT, роль SUPPLIER)
+
+- **GET /supplier/profile** – мой профиль
+
+- **PUT /supplier/profile** – обновить профиль
+
+- **POST /supplier/:id/review** – оставить отзыв (JWT)
+
+- **GET /supplier/:id/reviews** – отзывы о поставщике
+
+
+
+### 👤 Пользователи
+
+- **GET /users/me** – профиль
+
+- **PUT /users/me** – обновить профиль
+
+- **POST /users/me/change-password** – смена пароля
+
+- **(Админ)** GET /users, PUT /users/:id/role
+
+
+
+### 📌 Примеры запросов
+
+
+
+**Регистрация:**
+
+\`\`\`json
+
+POST /auth/register
+
+{
+
+  "email": "user@example.com",
+
+  "password": "123456",
+
+  "name": "Иван"
+
+}
+
+\`\`\`
+
+
+
+**Поиск оборудования:**
+
+\`/equipment?city=Москва&minPrice=10000&search=микрофон\`
+
+
+
+**Создание заказа:**
+
+\`\`\`json
+
+POST /orders
+
+Authorization: Bearer <token>
+
+{
+
+  "items": [
+
+    {
+
+      "equipmentId": "cmoyk9wl3003mja797rwi1ka7",
+
+      "quantity": 2,
+
+      "startDate": "2025-06-10",
+
+      "endDate": "2025-06-12"
+
+    }
+
+  ],
+
+  "eventType": "CONFERENCE",
+
+  "eventCity": "Москва"
+
+}
+
+\`\`\`
 
 `)
 
-    .addBearerAuth(
+    .setVersion('1.0')
 
-      {
-
-        type: 'http',
-
-        scheme: 'bearer',
-
-        bearerFormat: 'JWT',
-
-        name: 'JWT',
-
-        description: 'Введите ваш JWT токен',
-
-        in: 'header',
-
-      },
-
-      'JWT-auth',
-
-    )
-
-    .addTag('auth', '🔐 Аутентификация и регистрация')
-
-    .addTag('users', '👤 Управление пользователями')
-
-    .addTag('equipment', '🎸 Оборудование и поиск')
-
-    .addTag('categories', '📂 Категории оборудования')
-
-    .addTag('orders', '📦 Заказы и бронирования')
-
-    .addTag('favorites', '❤️ Избранное')
+    .addBearerAuth()
 
     .build();
 
@@ -107,13 +203,9 @@ GhostEvent — платформа для аренды оборудования �
 
       persistAuthorization: true,
 
-      tagsSorter: 'alpha',
-
-      operationsSorter: 'alpha',
+      tryItOutEnabled: true,
 
     },
-
-    customSiteTitle: 'GhostEvent API Documentation',
 
   });
 

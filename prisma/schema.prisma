@@ -72,6 +72,9 @@ model Equipment {
 }
 
 model Order {
+  eventType    String?
+  eventDate    DateTime?
+  eventCity    String?
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
@@ -84,6 +87,8 @@ model Order {
 }
 
 model OrderItem {
+  startDate    DateTime
+  endDate      DateTime
   id          String    @id @default(cuid())
   orderId     String
   order       Order     @relation(fields: [orderId], references: [id])
