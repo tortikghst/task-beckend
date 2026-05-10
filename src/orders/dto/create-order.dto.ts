@@ -1,7 +1,7 @@
 
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsString, IsNumber, IsDateString, IsArray, ValidateNested, IsOptional } from 'class-validator';
+import { IsArray, ValidateNested, IsString, IsNumber, IsOptional, IsDateString } from 'class-validator';
 
 import { Type } from 'class-transformer';
 
@@ -13,19 +13,13 @@ export class OrderItemDto {
 
   equipmentId: string;
 
-
-
   @ApiProperty()
 
   quantity: number;
 
-
-
   @ApiProperty()
 
   startDate: string;
-
-
 
   @ApiProperty()
 
@@ -37,9 +31,23 @@ export class OrderItemDto {
 
 export class CreateOrderDto {
 
+  @ApiProperty({ type: [OrderItemDto] })
+
+  @IsArray()
+
+  @ValidateNested({ each: true })
+
+  @Type(() => OrderItemDto)
+
+  items: OrderItemDto[];
+
+
+
   @ApiProperty({ required: false })
 
   @IsOptional()
+
+  @IsString()
 
   eventType?: string;
 
@@ -59,19 +67,9 @@ export class CreateOrderDto {
 
   @IsOptional()
 
+  @IsString()
+
   eventCity?: string;
-
-
-
-  @ApiProperty({ type: [OrderItemDto] })
-
-  @IsArray()
-
-  @ValidateNested({ each: true })
-
-  @Type(() => OrderItemDto)
-
-  items: OrderItemDto[];
 
 }
 

@@ -15,7 +15,7 @@ export class EquipmentService {
 
   async findAll(filters?: any) {
 
-    // Игнорируем все фильтры, возвращаем всё оборудование
+    // Игнорируем фильтры, просто возвращаем всё оборудование
 
     return this.prisma.equipment.findMany();
 

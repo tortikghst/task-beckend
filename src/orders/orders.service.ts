@@ -1,5 +1,5 @@
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -17,53 +17,7 @@ export class OrdersService {
 
   async create(userId: string, dto: CreateOrderDto) {
 
-    // Проверка конфликта бронирования
-
-    for (const item of dto.items) {
-
-      const start = new Date(item.startDate);
-
-      const end = new Date(item.endDate);
-
-
-
-      const conflict = await this.prisma.orderItem.findFirst({
-
-        where: {
-
-          equipmentId: item.equipmentId,
-
-          startDate: { lte: end },
-
-          endDate: { gte: start },
-
-          order: {
-
-            status: { not: 'CANCELLED' },
-
-          },
-
-        },
-
-        include: { order: true },
-
-      });
-
-
-
-      if (conflict) {
-
-        throw new ConflictException(`Equipment ${item.equipmentId} is already booked for the selected dates`);
-
-      }
-
-    }
-
-
-
-    // Расчёт общей стоимости
-
-    let totalPrice = 0;
+    let total = 0;
 
     const itemsData = [];
 
@@ -71,13 +25,13 @@ export class OrdersService {
 
       const equipment = await this.prisma.equipment.findUnique({ where: { id: item.equipmentId } });
 
-      if (!equipment) throw new NotFoundException(`Equipment ${item.equipmentId} not found`);
+      if (!equipment) throw new NotFoundException('Equipment not found');
 
       const days = Math.ceil((new Date(item.endDate).getTime() - new Date(item.startDate).getTime()) / (1000 * 3600 * 24)) + 1;
 
       const itemTotal = equipment.price * item.quantity * days;
 
-      totalPrice += itemTotal;
+      total += itemTotal;
 
       itemsData.push({
 
@@ -87,35 +41,15 @@ export class OrdersService {
 
         price: equipment.price,
 
-        startDate: new Date(item.startDate),
-
-        endDate: new Date(item.endDate),
-
       });
 
     }
 
-
-
     const order = await this.prisma.order.create({
 
-      data: {
+      data: { userId, total, items: { create: itemsData } },
 
-        userId,
-
-        total: totalPrice,
-
-        items: { create: itemsData },
-
-        eventType: dto.eventType,
-
-        eventDate: dto.eventDate ? new Date(dto.eventDate) : undefined,
-
-        eventCity: dto.eventCity,
-
-      },
-
-      include: { items: { include: { equipment: true } } },
+      include: { items: true },
 
     });
 
@@ -127,15 +61,7 @@ export class OrdersService {
 
   async findAll(userId: string) {
 
-    return this.prisma.order.findMany({
-
-      where: { userId },
-
-      include: { items: { include: { equipment: true } } },
-
-      orderBy: { createdAt: 'desc' },
-
-    });
+    return this.prisma.order.findMany({ where: { userId }, include: { items: true }, orderBy: { createdAt: 'desc' } });
 
   }
 
@@ -143,13 +69,7 @@ export class OrdersService {
 
   async findOne(id: string, userId: string) {
 
-    const order = await this.prisma.order.findFirst({
-
-      where: { id, userId },
-
-      include: { items: { include: { equipment: true } } },
-
-    });
+    const order = await this.prisma.order.findFirst({ where: { id, userId }, include: { items: true } });
 
     if (!order) throw new NotFoundException('Order not found');
 
@@ -161,17 +81,9 @@ export class OrdersService {
 
   async updateStatus(id: string, userId: string, status: string) {
 
-    const order = await this.findOne(id, userId);
+    await this.findOne(id, userId);
 
-    return this.prisma.order.update({
-
-      where: { id },
-
-      data: { status },
-
-      include: { items: { include: { equipment: true } } },
-
-    });
+    return this.prisma.order.update({ where: { id }, data: { status } });
 
   }
 
@@ -183,13 +95,7 @@ export class OrdersService {
 
     const orders = await this.prisma.order.updateMany({
 
-      where: {
-
-        status: { in: ['CREATED', 'PENDING_PAYMENT'] },
-
-        createdAt: { lt: deadline },
-
-      },
+      where: { status: { in: ['CREATED', 'PENDING_PAYMENT'] }, createdAt: { lt: deadline } },
 
       data: { status: 'CANCELLED' },
 
